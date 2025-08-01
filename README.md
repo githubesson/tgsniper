@@ -10,6 +10,7 @@ A Telegram bot that monitors and automatically purchases profitable star gifts o
 - Discord notifications for successful purchases
 - Configurable price ranges and profit thresholds
 - Session persistence for uninterrupted operation
+- TON resale support: scans, analyzes and buys in Stars and TON separately (no cross-currency mixing)
 
 ## Setup
 
@@ -45,9 +46,13 @@ All configuration is handled through environment variables in the `.env` file:
 | `API_HASH` | Telegram API Hash | Required |
 | `SESSION_NAME` | Telegram session name | marketchecker |
 | `DISCORD_WEBHOOK_URL` | Discord webhook for notifications | Optional |
-| `MIN_PRICE` | Minimum gift price to consider | 600 |
-| `MAX_PRICE` | Maximum gift price to consider | 1600 |
-| `MIN_PROFIT_PERCENTAGE` | Minimum profit margin required | 30 |
+| `MIN_PRICE` | Minimum Stars price to consider | 600 |
+| `MAX_PRICE` | Maximum Stars price to consider | 1600 |
+| `MIN_PROFIT_PERCENTAGE` | Minimum profit margin required (Stars) | 30 |
+| `ENABLE_TON_SNIPING` | Enable sniping gifts priced in TON | false |
+| `MIN_TON_PRICE` | Minimum TON price to consider | 0 |
+| `MAX_TON_PRICE` | Maximum TON price to consider | 10000 |
+| `MIN_TON_PROFIT_PERCENTAGE` | Minimum profit margin required (TON) | 30 |
 | `USE_CONCURRENT` | Enable concurrent scanning | true |
 | `BATCH_SIZE` | Concurrent batch size | 50 |
 | `SCAN_INTERVAL` | Seconds between scans | 1.0 |
@@ -70,11 +75,11 @@ The bot will:
 
 ## How It Works
 
-1. **Market Scanning**: Fetches all available star gifts and their resale listings
-2. **Profit Analysis**: Groups gifts by type and calculates profit margins between lowest and second-lowest prices
-3. **Filtering**: Only considers gifts within configured price range and minimum profit threshold
-4. **Automated Purchase**: Attempts to purchase profitable opportunities automatically
-5. **Notifications**: Sends Discord alerts for successful purchases and periodic summaries
+1. **Market Scanning**: Fetches all available star gifts and their resale listings. Each resale listing is normalized from the new `resale_amount` array which may include Stars and/or TON prices.
+2. **Per-currency Profit Analysis**: Gifts are grouped by type and analyzed separately per currency (Stars vs TON). Profit is computed between the lowest and second-lowest prices in the same currency only.
+3. **Filtering**: Only considers entries within configured price ranges and per-currency minimum profit thresholds.
+4. **Automated Purchase**: For a selected opportunity, the bot purchases in the same currency. For TON purchases, the invoice includes `ton=True` to comply with the new API.
+5. **Notifications**: Discord alerts include price and profit with the correct currency (⭐ for Stars, TON for TON) and periodic summaries.
 
 ## Safety Features
 
